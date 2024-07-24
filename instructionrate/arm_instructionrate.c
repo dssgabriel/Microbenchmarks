@@ -1,15 +1,16 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
-#include <stdint.h>
 
 #ifdef __ARM_FEATURE_SVE
-#include <arm_sve.h>
+#  include <arm_sve.h>
 #endif
 
 extern uint64_t noptest(uint64_t iterations);
-extern uint64_t clktest(uint64_t iterations); 
+extern uint64_t clktest(uint64_t iterations);
 
+extern uint64_t intmixtest(uint64_t iterations);
 extern uint64_t addtest(uint64_t iterations);
 extern uint64_t addmultest(uint64_t iterations);
 extern uint64_t mul32test(uint64_t iterations);
@@ -32,7 +33,7 @@ extern uint64_t latfaddtest(uint64_t iterations, float arr[4]);
 extern uint64_t vecfadd128test(uint64_t iterations, float arr[4]);
 extern uint64_t vecfmul128test(uint64_t iterations, float arr[4]);
 extern uint64_t latvecfadd128test(uint64_t iterations, float arr[4]);
-extern uint64_t latvecfmul128test(uint64_t iterations, float arr[4]); 
+extern uint64_t latvecfmul128test(uint64_t iterations, float arr[4]);
 extern uint64_t mixvecfaddfmul128test(uint64_t iterations, float arr[4]);
 extern uint64_t vecfma128test(uint64_t iterations, float arr[4]);
 extern uint64_t scalarfmatest(uint64_t iterations, float arr[4]);
@@ -75,10 +76,14 @@ extern uint64_t xorzerotest(uint64_t iterations);
 extern uint64_t movzerotest(uint64_t iterations);
 extern uint64_t subzerotest(uint64_t iterations);
 
-float fpTestArr[4] __attribute__ ((aligned (64))) = { 0.2, 1.5, 2.7, 3.14 };
-float sveTestArr[64] __attribute__ ((aligned (64))) = { 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f };
-int intTestArr[4] __attribute__ ((aligned (64))) = { 1, 2, 3, 4 };
-int sinkArr[4] __attribute__ ((aligned (64))) = { 2, 3, 4, 5 };
+float fpTestArr[4] __attribute__((aligned(64))) = { 0.2, 1.5, 2.7, 3.14 };
+float sveTestArr[64] __attribute__((aligned(64))
+) = { 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f,
+      0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f,
+      0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f,
+      0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f, 0.2f, 1.5f, 2.7f, 3.14f };
+int intTestArr[4] __attribute__((aligned(64))) = { 1, 2, 3, 4 };
+int sinkArr[4] __attribute__((aligned(64))) = { 2, 3, 4, 5 };
 
 float measureFunction(uint64_t iterations, float clockSpeedGhz, uint64_t (*testfunc)(uint64_t));
 uint64_t vecadd128wrapper(uint64_t iterations);
@@ -101,9 +106,9 @@ uint64_t mixvecmulfmulwrapper(uint64_t iterations);
 uint64_t mixvecaddfaddwrapper(uint64_t iterations);
 uint64_t mixjmpvecaddwrapper(uint64_t iterations);
 uint64_t mixjmpvecmulwrapper(uint64_t iterations);
-uint64_t vecloadwrapper(uint64_t iterations); 
-uint64_t loadwrapper(uint64_t iterations); 
-uint64_t vecstorewrapper(uint64_t iterations); 
+uint64_t vecloadwrapper(uint64_t iterations);
+uint64_t loadwrapper(uint64_t iterations);
+uint64_t vecstorewrapper(uint64_t iterations);
 uint64_t mixloadstorewrapper(uint64_t iterations);
 uint64_t mix21loadstorewrapper(uint64_t iterations);
 uint64_t vecfma128wrapper(uint64_t iterations);
@@ -118,96 +123,170 @@ uint64_t svefmawrapper(uint64_t iterations);
 uint64_t latsvefmawrapper(uint64_t iterations);
 #endif
 
-int main(int argc, char *argv[]) {
-  struct timeval startTv, endTv; 
+int main(int argc, char* argv[]) {
+  struct timeval startTv, endTv;
   struct timezone startTz, endTz;
   uint64_t iterations = 1500000000;
   uint64_t iterationsHigh = iterations * 5;
   uint64_t time_diff_ms;
   float latency, opsPerNs, clockSpeedGhz;
-  
+
   // figure out clock speed
   gettimeofday(&startTv, &startTz);
   clktest(iterations);
-  gettimeofday(&endTv, &endTz);  
+  gettimeofday(&endTv, &endTz);
   time_diff_ms = 1000 * (endTv.tv_sec - startTv.tv_sec) + ((endTv.tv_usec - startTv.tv_usec) / 1000);
-  latency = 1e6 * (float)time_diff_ms / (float)iterations; 
+  latency = 1e6 * (float)time_diff_ms / (float)iterations;
   // clk speed should be 1/latency, assuming we got one add per clk, roughly
-  clockSpeedGhz = 1/latency;
-  printf("Estimated clock speed: %.2f GHz\n", clockSpeedGhz);
+  clockSpeedGhz = 1 / latency;
+  printf("Estimated CPU frequency: %.2f GHz\n\n", clockSpeedGhz);
 
-  printf("Adds per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, addtest));
-  printf("Nops per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, noptest));
-  printf("Indepdent movs per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, indepmovtest));
-  printf("Dependent movs per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, depmovtest));
-  printf("eor -> 0 per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, xorzerotest));
-  printf("mov -> 0 per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, movzerotest));
-  printf("sub -> 0 per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, subzerotest));
+  printf("Scalar integer mix   %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, intmixtest));
+  printf("Scalar ADD           %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, addtest));
 
+  /*
+  printf("NOP                  %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, noptest));
+  printf("Independent MOVs     %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, indepmovtest));
+  printf("Dependent MOVs       %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, depmovtest));
+  printf("MOV r,0              %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, movzerotest));
+  printf("XOR r,r              %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, xorzerotest));
+  printf("SUB r,r              %5.2f IPC\n", measureFunction(iterationsHigh, clockSpeedGhz, subzerotest));
 
   printf("Not taken jmps per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, jmptest));
   printf("Jump fusion test: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, fusejmptest));
-  printf("1:1 mixed not taken jmps / muls per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmuljmptest));
-  printf("1:2 mixed not taken jmps / muls per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmuljmptest21));
-  printf("1:1 mixed not taken jmps / adds per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixaddjmptest));
+  printf(
+    "1:1 mixed not taken jmps / muls per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmuljmptest)
+  );
+  printf(
+    "1:2 mixed not taken jmps / muls per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmuljmptest21)
+  );
+  printf(
+    "1:1 mixed not taken jmps / adds per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixaddjmptest)
+  );
   printf("1:1 mixed add/mul per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, addmultest));
   printf("ror per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, rortest));
-  printf("1:1 mixed mul/ror per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmulrortest));
-  printf("32-bit mul per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mul32test));
-  printf("64-bit mul per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mul32test));
-  printf("scalar fp32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, faddwrapper));
+  printf("1:1 mixed mul/ror per clk: % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, mixmulrortest));
+  printf(" 32 - bit mul per clk : % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, mul32test));
+  printf(" 64 - bit mul per clk : % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, mul32test));
+  printf(" scalar fp32 add per clk : % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, faddwrapper));
   printf("128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecadd128wrapper));
-  printf("128-bit vec int32 multiply per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecmul128wrapper));
-  printf("128-bit vec int32 mixed multiply and add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecaddmul128wrapper));
+  printf(
+    "128-bit vec int32 multiply per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecmul128wrapper)
+  );
+  printf(
+    "128-bit vec int32 mixed multiply and add per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecaddmul128wrapper)
+  );
   printf("128-bit vec fp32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecfadd128wrapper));
-  printf("128-bit vec fp32 multiply per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecfmul128wrapper));
-  printf("128-bit vec fp32 mixed multiply and add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecfaddfmul128wrapper));
-  printf("2:1 mixed scalar adds and 128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixaddvecadd128wrapper));
-  printf("3:1 mixed scalar adds and 128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mix3to1addvecadd128wrapper));
-  printf("1:1 mixed scalar adds and 128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mix1to1addvecadd128wrapper));
-  printf("1:1 mixed scalar 32-bit multiply and 128-bit vec int32 multiply per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixmulvecmulwrapper));
-  printf("1:1 mixed 128-bit vec fp32 multiply and 128-bit vec int32 multiply per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecmulfmulwrapper));
-  printf("1:1 mixed 128-bit vec fp32 add and 128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecaddfaddwrapper));
-  printf("1:2 mixed not taken jumps and 128-bit vec int32 add per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixjmpvecaddwrapper));
-  printf("1:1 mixed not taken jumps and 128-bit vec int32 mul per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixjmpvecmulwrapper));
-  printf("128-bit vec loads per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecloadwrapper));
+  printf(
+    "128-bit vec fp32 multiply per clk : % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, vecfmul128wrapper)
+  );
+  printf(
+    "128-bit vec fp32 mixed multiply and add per clk: %.2f\n",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecfaddfmul128wrapper)
+  );
+  printf(
+    "2:1 mixed scalar adds and 128 - bit vec int32 add per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixaddvecadd128wrapper)
+  );
+  printf(
+    "3:1 mixed scalar adds and 128-bit vec int32 add per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mix3to1addvecadd128wrapper)
+  );
+  printf(
+    "1:1 mixed scalar adds and 128-bit vec int32 add per clk: %.2f\n",
+    measureFunction(iterationsHigh, clockSpeedGhz, mix1to1addvecadd128wrapper)
+  );
+  printf(
+    "1:1 mixed scalar 32 - bit multiply and 128 - bit vec int32 multiply per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixmulvecmulwrapper)
+  );
+  printf(
+    "1:1 mixed 128-bit vec fp32 multiply and 128 - bit vec int32 multiply per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecmulfmulwrapper)
+  );
+  printf(
+    "1:1 mixed 128-bit vec fp32 add and 128 - bit vec int32 add per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecaddfaddwrapper)
+  );
+  printf(
+    "1:2 mixed not taken jumps and 128-bit vec int32 add per clk: %.2f\n",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixjmpvecaddwrapper)
+  );
+  printf(
+    "1:1 mixed not taken jumps and 128-bit vec int32 mul per clk: %.2f\n",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixjmpvecmulwrapper)
+  );
+  printf("128-bit vec loads per clk : % .2f\n ", measureFunction(iterationsHigh, clockSpeedGhz, vecloadwrapper));
   printf("128-bit vec stores per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecstorewrapper));
   printf("64-bit loads per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, loadwrapper));
-  printf("1:1 mixed 64-bit loads/stores per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixloadstorewrapper));
-  printf("2:1 mixed 64-bit loads/stores per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mix21loadstorewrapper));
+  printf(
+    "1:1 mixed 64-bit loads/stores per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixloadstorewrapper)
+  );
+  printf(
+    "2:1 mixed 64-bit loads / stores per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mix21loadstorewrapper)
+  );
   printf("64-bit multiply latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latmul64test));
-  printf("128-bit vec int32 add latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecadd128wrapper));
-  printf("128-bit vec int32 mul latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecmul128wrapper));
+  printf(
+    "128-bit vec int32 add latency : % .2f clocks\n ",
+    1 / measureFunction(iterations, clockSpeedGhz, latvecadd128wrapper)
+  );
+  printf(
+    "128-bit vec int32 mul latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecmul128wrapper)
+  );
   printf("Scalar FADD Latency: %.2f clocks\n", 1 / measureFunction(iterationsHigh, clockSpeedGhz, latfaddwrapper));
-  printf("128-bit vector FADD latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecfadd128wrapper));
-  printf("128-bit vector FMUL latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecfmul128wrapper));
+  printf(
+    "128-bit vector FADD latency : % .2f clocks\n ",
+    1 / measureFunction(iterations, clockSpeedGhz, latvecfadd128wrapper)
+  );
+  printf(
+    "128-bit vector FMUL latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecfmul128wrapper)
+  );
 
   printf("128-bit vector FMA per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, vecfma128wrapper));
-  printf("128-bit vector FMA latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecfma128wrapper));
+  printf(
+    "128-bit vector FMA latency: %.2f clocks\n", 1 / measureFunction(iterations, clockSpeedGhz, latvecfma128wrapper)
+  );
 #ifdef __ARM_FEATURE_SVE
-  printf("%lu-bit SVE vector FMA per clk: %.2f\n", svcntw() * 32, measureFunction(iterationsHigh, clockSpeedGhz, svefmawrapper));
-  printf("%lu-bit SVE vector FMA latency: %.2f clocks\n", svcntw() * 32, 1 / measureFunction(iterations, clockSpeedGhz, latsvefmawrapper));
+  printf(
+    "%lu-bit SVE vector FMA per clk: %.2f\n",
+    svcntw() * 32,
+    measureFunction(iterationsHigh, clockSpeedGhz, svefmawrapper)
+  );
+  printf(
+    "%lu-bit SVE vector FMA latency : % .2f clocks\n ",
+    svcntw() * 32,
+    1 / measureFunction(iterations, clockSpeedGhz, latsvefmawrapper)
+  );
 #endif
   printf("Scalar FMA per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, scalarfmawrapper));
   printf("Scalar FMA latency: %.2f clocks\n", 1 / measureFunction(iterationsHigh, clockSpeedGhz, latscalarfmawrapper));
-  printf("1:1 mixed 128-bit vector FMA/FADD per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecfaddfma128wrapper));
-  printf("1:1 mixed 128-bit vector FMA/FMUL per clk: %.2f\n", measureFunction(iterationsHigh, clockSpeedGhz, mixvecfmulfma128wrapper));
+  printf(
+    "1:1 mixed 128-bit vector FMA / FADD per clk : % .2f\n ",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecfaddfma128wrapper)
+  );
+  printf(
+    "1:1 mixed 128-bit vector FMA/FMUL per clk: %.2f\n",
+    measureFunction(iterationsHigh, clockSpeedGhz, mixvecfmulfma128wrapper)
+  );
+  */
+
   return 0;
 }
 
 float measureFunction(uint64_t iterations, float clockSpeedGhz, uint64_t (*testfunc)(uint64_t)) {
-  struct timeval startTv, endTv; 
-  struct timezone startTz, endTz; 
+  struct timeval startTv, endTv;
+  struct timezone startTz, endTz;
   uint64_t time_diff_ms;
   float latency, opsPerNs;
-  
+
   gettimeofday(&startTv, &startTz);
   testfunc(iterations);
-  gettimeofday(&endTv, &endTz);  
+  gettimeofday(&endTv, &endTz);
   time_diff_ms = 1000 * (endTv.tv_sec - startTv.tv_sec) + ((endTv.tv_usec - startTv.tv_usec) / 1000);
-  latency = 1e6 * (float)time_diff_ms / (float)iterations; 
-  opsPerNs = 1/latency;
-  //printf("%f adds/ns, %f adds/clk?\n", opsPerNs, opsPerNs / clockSpeedGhz);  
+  latency = 1e6 * (float)time_diff_ms / (float)iterations;
+  opsPerNs = 1 / latency;
   return opsPerNs / clockSpeedGhz;
 }
 
@@ -225,7 +304,7 @@ uint64_t latvecadd128wrapper(uint64_t iterations) {
 
 uint64_t latvecmul128wrapper(uint64_t iterations) {
   return latvecmul128test(iterations, intTestArr);
-} 
+}
 
 uint64_t mixvecaddmul128wrapper(uint64_t iterations) {
   return mixvecaddmul128test(iterations, intTestArr);
@@ -238,7 +317,7 @@ uint64_t faddwrapper(uint64_t iterations) {
 uint64_t latfaddwrapper(uint64_t iterations) {
   return latfaddtest(iterations, fpTestArr);
 }
-  
+
 uint64_t latvecfadd128wrapper(uint64_t iterations) {
   return latvecfadd128test(iterations, fpTestArr);
 }
@@ -253,10 +332,10 @@ uint64_t vecfadd128wrapper(uint64_t iterations) {
 
 uint64_t vecfmul128wrapper(uint64_t iterations) {
   return vecfmul128test(iterations, fpTestArr);
-} 
+}
 uint64_t mixvecfaddfmul128wrapper(uint64_t iterations) {
   return mixvecfaddfmul128test(iterations, fpTestArr);
-} 
+}
 
 uint64_t mixaddvecadd128wrapper(uint64_t iterations) {
   return mixaddvecadd128test(iterations, intTestArr);
@@ -312,7 +391,7 @@ uint64_t mixloadstorewrapper(uint64_t iterations) {
 
 uint64_t mix21loadstorewrapper(uint64_t iterations) {
   return mix21loadstoretest(iterations, intTestArr, sinkArr);
-} 
+}
 
 uint64_t vecfma128wrapper(uint64_t iterations) {
   return vecfma128test(iterations, fpTestArr);
@@ -346,4 +425,4 @@ uint64_t mixvecfmulfma128wrapper(uint64_t iterations) {
 
 uint64_t mixvecfaddfma128wrapper(uint64_t iterations) {
   return mixvecfaddfma128test(iterations, fpTestArr);
-} 
+}

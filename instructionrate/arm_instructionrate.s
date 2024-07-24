@@ -1,6 +1,7 @@
 .text
 
 .global clktest
+.global intmixtest
 .global addtest
 .global addmultest
 .global mul32test
@@ -142,6 +143,42 @@ noptest_loop:
   ldp x14, x15, [sp, #0x10]
   add sp, sp, #0x30
   ret 
+
+intmixtest:
+intmixtest_loop:
+  sub  x0,  x0,  #30
+  adds x19, x20, x21, uxtx #1
+  adds x20, x21, x22, uxtx #1
+  add  x21, x22, x23
+  add  x22, x23, x24
+  add  x23, x24, x25
+  add  x24, x25, x26
+  adds x19, x20, x21, uxtx #1
+  adds x20, x21, x22, uxtx #1
+  add  x21, x22, x23
+  add  x22, x23, x24
+  add  x23, x24, x25
+  add  x24, x25, x26
+  adds x19, x20, x21, uxtx #1
+  adds x20, x21, x22, uxtx #1
+  add  x21, x22, x23
+  add  x22, x23, x24
+  add  x23, x24, x25
+  add  x24, x25, x26
+  adds x19, x20, x21, uxtx #1
+  adds x20, x21, x22, uxtx #1
+  add  x21, x22, x23
+  add  x22, x23, x24
+  add  x23, x24, x25
+  add  x24, x25, x26
+  adds x19, x20, x21, uxtx #1
+  adds x20, x21, x22, uxtx #1
+  add  x21, x22, x23
+  add  x22, x23, x24
+  add  x23, x24, x25
+  add  x24, x25, x26
+  cbnz x0,  intmixtest_loop
+  ret
 
 addtest:
   sub sp, sp, #0x50
